@@ -1,0 +1,14 @@
+# macOS
+.DS_Store
+
+# Dist
+/build
+
+# Build
+/target
+
+# IDEs
+*.iml
+.idea
+*.gz
+*.core
