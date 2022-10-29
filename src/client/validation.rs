@@ -13,16 +13,16 @@ pub enum ValidationType {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ValidationOptions {
-    email_validation: Option<HashMap<String, Vec<String>>>,
-    other_methods: Option<HashMap<String, OtherValidation>>,
+    pub email_validation: Option<HashMap<String, Vec<String>>>,
+    pub other_methods: Option<HashMap<String, OtherValidation>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct OtherValidation {
-    file_validation_url_http: Option<String>,
-    file_validation_url_https: Option<String>,
-    file_validation_content: Option<Vec<String>>,
-    cname_validation_p1: Option<String>,
-    cname_validation_p2: Option<String>
+    pub file_validation_url_http: Option<String>,
+    pub file_validation_url_https: Option<String>,
+    pub file_validation_content: Option<Vec<String>>,
+    pub cname_validation_p1: Option<String>,
+    pub cname_validation_p2: Option<String>
 }
 
