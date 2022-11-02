@@ -144,7 +144,13 @@ pub struct ListCertificatesRes {
     pub(crate) result_status: ResultStatus,
 
     // Actual response
-    pub results: Vec<Certificate>,
+    pub(crate) results: Vec<Certificate>,
+}
+
+impl ListCertificatesRes {
+    pub fn results(&self) -> &Vec<Certificate> {
+        &self.results
+    }
 }
 
 impl Resp for ListCertificatesRes {
