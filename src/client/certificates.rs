@@ -70,7 +70,13 @@ pub struct CreateCertificateRes {
 
     // Actual response
     #[serde(flatten)]
-    pub certificate: Certificate,
+    pub(crate) certificate: Certificate,
+}
+
+impl CreateCertificateRes {
+    pub fn certificate(&self) -> &Certificate {
+        &self.certificate
+    }
 }
 
 impl Resp for CreateCertificateRes {
@@ -167,4 +173,14 @@ pub struct Certificate {
     pub validation_emails: Option<String>,
     pub replacement_for: Option<String>,
     pub validation: Option<ValidationOptions>,
+}
+
+impl Certificate {
+    pub fn file_validation(&self, domain: &String) -> Option<(String, Vec<String>)> {
+        if let Some(validation) = self.validation.as_ref() {
+            return validation.file_validation(domain);
+        }
+
+        None
+    }
 }

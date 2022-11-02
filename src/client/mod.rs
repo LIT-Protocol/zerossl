@@ -1,7 +1,7 @@
 use reqwest::{Response, StatusCode};
 
 use crate::client::certificates::{CreateCertificateReq, CreateCertificateRes, ListCertificatesReq, ListCertificatesRes};
-use crate::client::result::{Resp, ResultStatus, ResultStatusAlt};
+use crate::client::result::{Resp, ResultStatusAlt};
 use crate::error as error;
 use crate::error::Result;
 
@@ -11,7 +11,15 @@ pub mod result;
 
 pub static API_URL: &str = "https://api.zerossl.com";
 
-pub static PENDING_STATUS: [&str;2] = ["draft", "pending_validation"];
+pub static STATUS_DRAFT: &str = "draft";
+pub static STATUS_PENDING_VALIDATION: &str = "pending_validation";
+pub static STATUS_ISSUED: &str = "issued";
+pub static STATUS_CANCELLED: &str = "cancelled";
+pub static STATUS_REVOKED: &str = "revoked";
+pub static STATUS_EXPIRED: &str = "expired";
+
+pub static ACTIVE_STATUS: [&str;1] = [STATUS_ISSUED];
+pub static PENDING_STATUS: [&str;2] = [STATUS_DRAFT, STATUS_PENDING_VALIDATION];
 
 pub struct Client {
     api_key: String,
@@ -107,9 +115,22 @@ impl Client {
         self.get_certificates(&cert_search_req).await
     }
 
-    pub async fn purge_pending_certificates(&self, domain: String) -> Result<()> {
+    pub async fn purge_certificates(&self, domain: String, include_pending: bool, include_active: bool) -> Result<()> {
+        if !include_pending && !include_active {
+            return Err(error::request("include_pending or include_active must be true when calling purge_certificates", None))
+        }
+
         let mut cert_search_req = ListCertificatesReq::for_search(domain);
-        cert_search_req.with_status(PENDING_STATUS.to_vec());
+
+        let mut status = Vec::new();
+        if include_pending {
+            status.extend(PENDING_STATUS.to_vec());
+        }
+        if include_active {
+            status.extend(ACTIVE_STATUS);
+        }
+
+        cert_search_req.with_status(status);
 
         let res = self.get_certificates(&cert_search_req).await?;
 
@@ -153,21 +174,21 @@ mod tests {
     use crate::client::Client;
 
     #[tokio::test]
-    /*
     async fn dummy_test() {
         //let test_domain = "107.178.100.155".to_string();
         //let is_ip = true;
         let test_domain = "dev.getlit.sh".to_string();
         let is_ip = false;
 
-        let client = Client::new(env::var("API_KEY").unwrap().as_str());
+        let api_key = env::var("API_KEY").unwrap();
+        let client = Client::new(api_key);
 
         let pkey = generate_rsa_2048_priv_key().unwrap();
 
         let mut domains: Vec<String> = Vec::new();
         domains.push(test_domain.clone());
 
-        let mut csr = Csr::new(test_domain);
+        let mut csr = Csr::new(test_domain.clone());
         let csr = csr.with_alt_names(domains.clone(), is_ip)
             .with_country("AU".to_string())
             .with_org_name("Lit".to_string())
@@ -176,24 +197,31 @@ mod tests {
         let cert_req = CreateCertificateReq::from_csr(&pkey, &csr)
             .expect("failed to make cert req");
 
+        client.purge_certificates(test_domain.clone(), true, false).await
+            .expect("failed to purge certs");
+
         let cert_res = client.create_certificate(&cert_req).await
             .expect("failed to get cert");
+
+        println!("FV: {:#?}", cert_res.certificate().file_validation(&test_domain).unwrap());
 
         println!("OUT: {:#?}", cert_res);
 
         assert!(false);
     }
 
-     */
+    /*
     async fn dummy_test() {
         // TODO: REMOVE
         let test_domain = "dev.getlit.sh".to_string();
         let api_key = env::var("API_KEY").unwrap();
         let client = Client::new(api_key);
 
-        client.purge_pending_certificates(test_domain).await
-            .expect("failed to get certs");
+        client.purge_certificates(test_domain, true, false).await
+            .expect("failed to purge certs");
 
         assert!(false);
     }
+
+     */
 }
