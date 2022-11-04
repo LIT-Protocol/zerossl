@@ -1,6 +1,6 @@
 use reqwest::{Response, StatusCode};
 
-use crate::client::certificates::{CreateCertificateReq, CreateCertificateRes, ListCertificatesReq, ListCertificatesRes, VerifyCertificateReq, VerifyCertificateRes};
+use crate::client::certificates::{CreateCertificateReq, CreateCertificateRes, DownloadCertificateRes, ListCertificatesReq, ListCertificatesRes, VerifyCertificateReq, VerifyCertificateRes};
 use crate::client::result::{Resp, ResultStatusAlt};
 use crate::error as error;
 use crate::error::Result;
@@ -175,6 +175,27 @@ impl Client {
         }
 
         let res = res.json::<VerifyCertificateRes>()
+            .await
+            .map_err(|e| error::request(e, None))?;
+
+        // Apparently even error's produce Status 200 (???)
+        if !res.is_ok() {
+            return Err(res.to_err());
+        }
+
+        Ok(res)
+    }
+
+    pub async fn download_certificate(&self, id: String) -> Result<DownloadCertificateRes> {
+        let res = self.get(format!("/certificates/{}/download/return", id).as_str())
+            .send().await
+            .map_err(|e| error::request(e, None))?;
+
+        if res.status() != StatusCode::OK {
+            return Err(self.res_to_err(res).await);
+        }
+
+        let res = res.json::<DownloadCertificateRes>()
             .await
             .map_err(|e| error::request(e, None))?;
 

@@ -195,6 +195,39 @@ impl Resp for VerifyCertificateRes {
     }
 }
 
+// Download Certificate
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DownloadCertificateRes {
+    #[serde(flatten)]
+    pub(crate) result_status: ResultStatus,
+
+    #[serde(rename = "certificate.crt")]
+    certificate_crt: Option<String>,
+
+    #[serde(rename = "ca_bundle.crt")]
+    ca_bundle_crt: Option<String>,
+}
+
+impl DownloadCertificateRes {
+    pub fn take_certificate_crt(&mut self) -> Option<String> {
+        self.certificate_crt.take()
+    }
+
+    pub fn take_ca_bundle_crt(&mut self) -> Option<String> {
+        self.ca_bundle_crt.take()
+    }
+}
+
+impl Resp for DownloadCertificateRes {
+    fn is_ok(&self) -> bool {
+        return self.result_status.is_ok();
+    }
+
+    fn err_msg(&self) -> Option<ErrorMsg> {
+        return self.result_status.err_msg();
+    }
+}
+
 // Common
 
 #[derive(Debug, Serialize, Deserialize)]
