@@ -1,6 +1,6 @@
 use reqwest::{Response, StatusCode};
 
-use crate::client::certificates::{CreateCertificateReq, CreateCertificateRes, ListCertificatesReq, ListCertificatesRes};
+use crate::client::certificates::{CreateCertificateReq, CreateCertificateRes, ListCertificatesReq, ListCertificatesRes, VerifyCertificateReq, VerifyCertificateRes};
 use crate::client::result::{Resp, ResultStatusAlt};
 use crate::error as error;
 use crate::error::Result;
@@ -164,11 +164,33 @@ impl Client {
         Ok(res)
     }
 
+    pub async fn verify_certificate(&self, id: String, req: &VerifyCertificateReq) -> Result<VerifyCertificateRes> {
+        let res = self.post(format!("/certificates/{}/challenges", id).as_str())
+            .form(req)
+            .send().await
+            .map_err(|e| error::request(e, None))?;
+
+        if res.status() != StatusCode::OK {
+            return Err(self.res_to_err(res).await);
+        }
+
+        let res = res.json::<VerifyCertificateRes>()
+            .await
+            .map_err(|e| error::request(e, None))?;
+
+        // Apparently even error's produce Status 200 (???)
+        if !res.is_ok() {
+            return Err(res.to_err());
+        }
+
+        Ok(res)
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use std::env;
+
     use crate::certs::csr::{Csr, generate_rsa_2048_priv_key};
     use crate::client::certificates::{CreateCertificateReq, ListCertificatesReq};
     use crate::client::Client;

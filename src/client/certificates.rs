@@ -56,10 +56,6 @@ impl CreateCertificateReq {
         self.strict_domains = strict_domains;
         self
     }
-
-    // Accessors
-
-
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -154,6 +150,42 @@ impl ListCertificatesRes {
 }
 
 impl Resp for ListCertificatesRes {
+    fn is_ok(&self) -> bool {
+        return self.result_status.is_ok();
+    }
+
+    fn err_msg(&self) -> Option<ErrorMsg> {
+        return self.result_status.err_msg();
+    }
+}
+
+// Verify Certificate
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct VerifyCertificateReq {
+    validation_method: ValidationType,
+    validation_email: Option<String>,
+}
+
+impl VerifyCertificateReq {
+    pub fn new(
+        validation_method: ValidationType,
+        validation_email: Option<String>,
+    ) -> Self {
+        Self {
+            validation_method,
+            validation_email
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct VerifyCertificateRes {
+    #[serde(flatten)]
+    pub(crate) result_status: ResultStatus,
+}
+
+impl Resp for VerifyCertificateRes {
     fn is_ok(&self) -> bool {
         return self.result_status.is_ok();
     }

@@ -159,7 +159,7 @@ pub fn generate_csr(
     pkey: &PKey<Private>,
     csr: &Csr
 ) -> Result<X509Req, ErrorStack>{
-    let mut name = extract_name_from_csr(csr)?;
+    let name = extract_name_from_csr(csr)?;
 
     let mut builder = X509Req::builder()?;
     builder.set_version(2)?;
@@ -190,7 +190,7 @@ pub fn generate_ca(
     csr: &Csr,
     days: Option<u32>
 ) -> Result<X509, ErrorStack>{
-    let mut name = extract_name_from_csr(csr)?;
+    let name = extract_name_from_csr(csr)?;
 
     let mut builder = X509::builder()?;
     builder.set_version(2)?;
