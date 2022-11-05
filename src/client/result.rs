@@ -1,6 +1,6 @@
-use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 pub trait Resp {
     fn is_ok(&self) -> bool;
@@ -68,6 +68,7 @@ pub struct ErrorMsg {
     code: Option<i32>,
     #[serde(rename = "type")]
     typ: Option<String>,
+    details: Option<Value>
 }
 
 impl Display for ErrorMsg {
@@ -80,6 +81,10 @@ impl Display for ErrorMsg {
 
         if let Some(typ) = &self.typ {
             write!(f, ": {}", typ)?;
+        }
+
+        if let Some(details) = &self.details {
+            write!(f, ": {}", details)?;
         }
 
         Ok(())
