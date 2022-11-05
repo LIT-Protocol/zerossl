@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use serde::{Deserialize, Serialize};
 
@@ -66,7 +67,8 @@ impl Resp for ResultStatusAlt {
 pub struct ErrorMsg {
     code: Option<i32>,
     #[serde(rename = "type")]
-    typ: Option<String>
+    typ: Option<String>,
+    details: Option<HashMap<String, HashMap<String, String>>>
 }
 
 impl Display for ErrorMsg {
@@ -79,6 +81,10 @@ impl Display for ErrorMsg {
 
         if let Some(typ) = &self.typ {
             write!(f, ": {}", typ)?;
+        }
+
+        if let Some(details) = &self.details {
+            write!(f, ": {:?}", details)?;
         }
 
         Ok(())
