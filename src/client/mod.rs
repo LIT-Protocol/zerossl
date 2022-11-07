@@ -9,14 +9,14 @@ pub mod certificates;
 pub mod validation;
 pub mod result;
 
-pub static API_URL: &str = "https://api.zerossl.com";
+pub const API_URL: &str = "https://api.zerossl.com";
 
-pub static STATUS_DRAFT: &str = "draft";
-pub static STATUS_PENDING_VALIDATION: &str = "pending_validation";
-pub static STATUS_ISSUED: &str = "issued";
-pub static STATUS_CANCELLED: &str = "cancelled";
-pub static STATUS_REVOKED: &str = "revoked";
-pub static STATUS_EXPIRED: &str = "expired";
+pub const STATUS_DRAFT: &str = "draft";
+pub const STATUS_PENDING_VALIDATION: &str = "pending_validation";
+pub const STATUS_ISSUED: &str = "issued";
+pub const STATUS_CANCELLED: &str = "cancelled";
+pub const STATUS_REVOKED: &str = "revoked";
+pub const STATUS_EXPIRED: &str = "expired";
 
 pub static ACTIVE_STATUS: [&str;1] = [STATUS_ISSUED];
 pub static PENDING_STATUS: [&str;2] = [STATUS_DRAFT, STATUS_PENDING_VALIDATION];
@@ -136,7 +136,16 @@ impl Client {
 
         for rec in res.results.iter() {
             if let Some(id) = rec.id.as_ref() {
-                self.cancel_certificate(id.clone()).await?;
+                if let Some(status) = rec.status.as_ref() {
+                    match status.as_str() {
+                        STATUS_DRAFT | STATUS_PENDING_VALIDATION => {
+                            self.cancel_certificate(id.clone()).await?;
+                        }
+                        _ => {
+                            self.revoke_certificate(id.clone()).await?;
+                        }
+                    }
+                }
             }
         }
 
@@ -145,6 +154,27 @@ impl Client {
 
     pub async fn cancel_certificate(&self, id: String) -> Result<ResultStatusAlt> {
         let res = self.post(format!("/certificates/{}/cancel", id).as_str())
+            .send().await
+            .map_err(|e| error::request(e, None))?;
+
+        if res.status() != StatusCode::OK {
+            return Err(self.res_to_err(res).await);
+        }
+
+        let res = res.json::<ResultStatusAlt>()
+            .await
+            .map_err(|e| error::request(e, None))?;
+
+        // Apparently even error's produce Status 200 (???)
+        if !res.is_ok() {
+            return Err(res.to_err());
+        }
+
+        Ok(res)
+    }
+
+    pub async fn revoke_certificate(&self, id: String) -> Result<ResultStatusAlt> {
+        let res = self.post(format!("/certificates/{}/revoke", id).as_str())
             .send().await
             .map_err(|e| error::request(e, None))?;
 

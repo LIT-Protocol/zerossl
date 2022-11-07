@@ -2,6 +2,8 @@ use std::fmt::{Display, Formatter};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+pub static ERR_TYPE_CERTIFICATE_NOT_ISSUED: &str = "certificate_not_issued";
+
 pub trait Resp {
     fn is_ok(&self) -> bool;
     fn err_msg(&self) -> Option<ErrorMsg>;
@@ -69,6 +71,20 @@ pub struct ErrorMsg {
     #[serde(rename = "type")]
     typ: Option<String>,
     details: Option<Value>
+}
+
+impl ErrorMsg {
+    pub fn code(&self) -> Option<i32> {
+        self.code.clone()
+    }
+
+    pub fn typ(&self) -> Option<String> {
+        self.typ.clone()
+    }
+
+    pub fn details(&self) -> Option<Value> {
+        self.details.clone()
+    }
 }
 
 impl Display for ErrorMsg {

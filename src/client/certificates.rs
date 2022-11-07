@@ -2,7 +2,7 @@ use openssl::pkey::{PKey, Private};
 use serde::{Deserialize, Serialize};
 use crate::certs::csr::{Csr, generate_csr};
 
-use crate::client::result::{ErrorMsg, Resp, ResultStatus};
+use crate::client::result::{ERR_TYPE_CERTIFICATE_NOT_ISSUED, ErrorMsg, Resp, ResultStatus};
 use crate::client::validation::{ValidationOptions, ValidationType};
 
 // Create Certificate
@@ -209,6 +209,18 @@ pub struct DownloadCertificateRes {
 }
 
 impl DownloadCertificateRes {
+    pub fn is_err_type_not_issued(&self) -> bool {
+        if !self.is_ok() {
+            if let Some(err_msg) = self.result_status.err_msg().as_ref() {
+                if let Some(typ) = err_msg.typ().as_ref() {
+                    return typ.eq_ignore_ascii_case(ERR_TYPE_CERTIFICATE_NOT_ISSUED);
+                }
+            }
+        }
+
+        true
+    }
+
     pub fn take_certificate_crt(&mut self) -> Option<String> {
         self.certificate_crt.take()
     }
